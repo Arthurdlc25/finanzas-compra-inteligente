@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}AutoFinance - {{ titulo }}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+    
+    <div>
+        <a href="{% url 'vehiculos_list' %}" class="text-xs font-semibold text-blue-600 hover:underline flex items-center gap-1 mb-2">
+            ← Volver al Inventario Vehicular
+        </a>
+        <h1 class="text-3xl font-bold text-gray-950">{{ titulo }}</h1>
+        <p class="text-gray-500 text-sm mt-1">Registra las especificaciones técnicas del activo prendario y su valor de mercado de tasación.</p>
+    </div>
+
+    <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+        
+        {% if form.errors %}
+            <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-r-xl text-xs text-red-700">
+                <p class="font-bold text-sm mb-1">Por favor verifica los campos obligatorios del automóvil.</p>
+            </div>
+        {% endif %}
+
+        <form method="POST" class="space-y-6 m-0 p-0">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Marca del Auto</label>
+                    {{ form.marca }}
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Modelo / Versión</label>
+                    {{ form.modelo }}
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Año de Fabricación</label>
+                    {{ form.anio }}
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Precio de Venta Comercial (USD $)</label>
+                    {{ form.precio_base }}
+                </div>
+            </div>
+
+            <div class="pt-6 border-t border-gray-100 flex items-start gap-3">
+                <div class="flex items-center h-5">
+                    {{ form.disponible }}
+                </div>
+                <div class="text-sm">
+                    <label for="{{ form.disponible.id_for_label }}" class="font-bold text-gray-900 cursor-pointer">Habilitar unidad en stock comercial</label>
+                    <p class="text-xs text-gray-400 mt-0.5">Al marcar esta casilla, los asesores de ventas verán listado el vehículo en la calculadora del simulador financiero.</p>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-6 border-t border-gray-100">
+                <a href="{% url 'vehiculos_list' %}" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl text-sm transition-all cursor-pointer">
+                    Cancelar
+                </a>
+                <button type="submit" class="px-6 py-2.5 bg-[#0f2e5c] hover:bg-blue-900 text-white font-semibold rounded-xl text-sm transition-all shadow-md shadow-blue-900/10 cursor-pointer">
+                    Guardar Automóvil
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

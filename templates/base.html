@@ -57,7 +57,7 @@
                         {% endif %}
 
                         {% if permissions.vehiculos > 0 %}
-                        <a href="#" 
+                        <a href="{% url 'vehiculos_list' %}" 
                            class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all {% if request.resolver_match.url_name == 'vehiculos_list' %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-sm{% else %}text-blue-200 hover:bg-blue-900/40 hover:text-white border border-transparent{% endif %}">
                             <span class="text-base">🚘</span> Vehículos
                         </a>

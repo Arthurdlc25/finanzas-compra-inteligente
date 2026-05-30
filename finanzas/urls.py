@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import clientes_list, cliente_create, cliente_edit, bancos_list, banco_create, banco_edit
+from .views import clientes_list, cliente_create, cliente_edit, bancos_list, banco_create, banco_edit, vehiculos_list, vehiculo_create, vehiculo_edit
 
 urlpatterns = [
     path('clientes/', clientes_list, name='clientes_list'),
@@ -9,4 +9,8 @@ urlpatterns = [
     path('configuracion/bancos/', bancos_list, name='bancos_list'),
     path('configuracion/bancos/nuevo/', banco_create, name='banco_create'),
     path('configuracion/bancos/editar/<int:pk>/', banco_edit, name='banco_edit'),
+
+    path('vehiculos/', vehiculos_list, name='vehiculos_list'),
+    path('vehiculos/nuevo/', vehiculo_create, name='vehiculo_create'),
+    path('vehiculos/editar/<int:pk>/', vehiculo_edit, name='vehiculo_edit'),
 ]
