@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+
+{% block title %}AutoFinance - Dashboard Principal{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    
+    <div>
+        <h1 class="text-3xl font-bold text-gray-950">Dashboard Principal</h1>
+        <p class="text-gray-500 text-sm mt-1">Resumen general de la cartera vehicular y colocaciones de créditos.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between relative group">
+            <div class="flex justify-between items-start">
+                <span class="text-xs font-bold text-blue-500 tracking-wider uppercase">Cartera Total</span>
+                <div class="relative cursor-help">
+                    <span class="text-gray-400 hover:text-blue-600 transition-colors text-sm font-semibold">ⓘ</span>
+                    <div class="absolute bottom-full right-0 mb-2 w-56 hidden group-hover:block bg-slate-900 text-white text-[11px] p-2.5 rounded-xl shadow-lg leading-relaxed z-30">
+                        Suma del capital vivo total de todos los créditos automotrices vigentes colocados por la entidad.
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4">
+                <h3 class="text-2xl font-black text-gray-900">S/. 14,250,800</h3>
+                <p class="text-xs text-emerald-600 font-medium mt-1">▲ +12.3% <span class="text-gray-400 font-normal">vs el mes anterior</span></p>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between relative group">
+            <div class="flex justify-between items-start">
+                <span class="text-xs font-bold text-blue-500 tracking-wider uppercase">Créditos Activos</span>
+                <div class="relative cursor-help">
+                    <span class="text-gray-400 hover:text-blue-600 transition-colors text-sm font-semibold">ⓘ</span>
+                    <div class="absolute bottom-full right-0 mb-2 w-56 hidden group-hover:block bg-slate-900 text-white text-[11px] p-2.5 rounded-xl shadow-lg leading-relaxed z-30">
+                        Número de contratos vigentes en simulación final o ejecución con clientes del sistema financiero.
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4">
+                <h3 class="text-2xl font-black text-gray-900">342 Clientes</h3>
+                <p class="text-xs text-emerald-600 font-medium mt-1">▲ +4.5% <span class="text-gray-400 font-normal">nuevas firmas</span></p>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between relative group">
+            <div class="flex justify-between items-start">
+                <span class="text-xs font-bold text-blue-500 tracking-wider uppercase">TCEA Promedio</span>
+                <div class="relative cursor-help">
+                    <span class="text-gray-400 hover:text-blue-600 transition-colors text-sm font-semibold">ⓘ</span>
+                    <div class="absolute bottom-full right-0 mb-2 w-56 hidden group-hover:block bg-slate-900 text-white text-[11px] p-2.5 rounded-xl shadow-lg leading-relaxed z-30">
+                        Tasa de Costo Efectivo Anual ponderada. Refleja el costo real de los créditos incluyendo la tasa de interés, comisiones y seguros regulados por la SBS.
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4">
+                <h3 class="text-2xl font-black text-gray-900">14.85 %</h3>
+                <p class="text-xs text-gray-400 mt-1">Calculado sobre el método francés vencido.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <div>
+                <h2 class="text-lg font-bold text-gray-900">Colocaciones por Mes</h2>
+                <p class="text-gray-400 text-xs">Monitoreo dinámico del volumen de financiamiento vehicular.</p>
+            </div>
+            
+            <div class="inline-flex bg-slate-100 p-1 rounded-xl border border-gray-200">
+                <button id="btnSoles" onclick="cambiarMoneda('PEN')" 
+                    class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-[#0f2e5c] text-white shadow-sm cursor-pointer">
+                    Soles (S/.)
+                </button>
+                <button id="btnDolares" onclick="cambiarMoneda('USD')" 
+                    class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all text-gray-500 hover:text-gray-900 cursor-pointer">
+                    Dólares ($)
+                </button>
+            </div>
+        </div>
+
+        <div class="w-full h-80">
+            <canvas id="colocacionesChart"></canvas>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Datos simulados bimoneda para el gráfico interactivo
+    const datosGrafico = {
+        'PEN': {
+            label: 'Colocaciones (S/. miles)',
+            simbolo: 'S/. ',
+            data: [120, 150, 180, 220, 190, 240] // Valores en soles
+        },
+        'USD': {
+            label: 'Colocaciones ($ miles)',
+            simbolo: '$ ',
+            data: [32, 40, 48, 59, 51, 64] // Valores equivalentes en dólares
+        }
+    };
+
+    const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'];
+    const ctx = document.getElementById('colocacionesChart').getContext('2d');
+    
+    // Inicialización del gráfico Chart.js con la configuración corporativa
+    let miGrafico = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: meses,
+            datasets: [{
+                label: datosGrafico['PEN'].label,
+                data: datosGrafico['PEN'].data,
+                backgroundColor: '#0f2e5c', // Azul institucional
+                borderRadius: 8,
+                hoverBackgroundColor: '#10b981' // Cambia a verde esmeralda en hover
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false } // Ocultamos leyenda por diseño limpio
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: '#f1f5f9' },
+                    ticks: {
+                        callback: function(value) { return 'S/. ' + value + 'k'; }
+                    }
+                },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // Función de JavaScript para cambiar dinámicamente la moneda del gráfico
+    function cambiarMoneda(moneda) {
+        const btnSoles = document.getElementById('btnSoles');
+        const btnDolares = document.getElementById('btnDolares');
+        
+        // 1. Alternar estilos visuales de los botones activos
+        if (moneda === 'PEN') {
+            btnSoles.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-[#0f2e5c] text-white shadow-sm cursor-pointer";
+            btnDolares.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition-all text-gray-500 hover:text-gray-900 cursor-pointer";
+        } else {
+            btnDolares.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-[#0f2e5c] text-white shadow-sm cursor-pointer";
+            btnSoles.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition-all text-gray-500 hover:text-gray-900 cursor-pointer";
+        }
+
+        // 2. Modificar los datos y las etiquetas de los ejes en el objeto del gráfico
+        miGrafico.data.datasets[0].data = datosGrafico[moneda].data;
+        miGrafico.options.scales.y.ticks.callback = function(value) {
+            return datosGrafico[moneda].simbolo + value + 'k';
+        };
+        
+        // 3. Renderizar la animación del cambio
+        miGrafico.update();
+    }
+</script>
+{% endblock %}

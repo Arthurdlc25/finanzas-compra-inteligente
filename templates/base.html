@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AutoFinance - Sistema Financiero{% endblock %}</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-slate-100 text-gray-900 font-sans min-h-screen flex flex-col m-0">
+
+    <!-- NAVBAR SUPERIOR -->
+    <header class="bg-[#0f2e5c] text-white h-16 px-6 flex items-center justify-between shadow-md z-20 shrink-0">
+        <!-- Logo Principal -->
+        <div class="flex items-center gap-2">
+            <span class="text-xl font-bold tracking-tight">Auto<span class="text-emerald-400">Finance</span></span>
+        </div>
+        
+        <!-- Información de Usuario Autenticado -->
+        <div class="flex items-center gap-3">
+            <span class="text-sm font-medium text-blue-100">
+                Bienvenido, {% if user.is_authenticated %}{{ user.first_name }}{% else %}Usuario{% endif %}
+            </span>
+            <div class="w-9 h-9 rounded-full bg-emerald-500 font-bold text-sm text-white flex items-center justify-center shadow-inner uppercase">
+                {% if user.is_authenticated %}
+                    {{ user.first_name|slice:":1" }}{% if user.last_name %}{{ user.last_name|slice:":1" }}{% endif %}
+                {% else %}
+                    GC
+                {% endif %}
+            </div>
+            <!-- Botón de Salida Seguro -->
+            {% if user.is_authenticated %}
+                <form action="{% url 'logout' %}" method="POST" class="inline m-0 p-0">
+                    {% csrf_token %}
+                    <button type="submit" class="text-xs bg-blue-900/40 hover:bg-red-600/20 hover:text-red-300 text-blue-200 px-3 py-1.5 rounded-lg font-medium transition-all ml-2 cursor-pointer">
+                        Salir
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden">
+        
+        <aside class="w-64 bg-[#0a2246] text-blue-100 flex flex-col justify-between p-4 shadow-xl z-10 shrink-0 select-none">
+            <div class="space-y-6">
+                <div>
+                    <p class="text-[10px] font-bold tracking-wider text-blue-400 uppercase px-3 mb-2">Principal</p>
+                    <nav class="space-y-1">
+                        <a href="{% url 'dashboard' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-sm">
+                            <span class="text-base">📋</span> Dashboard
+                        </a>
+
+                        {% if permissions.clientes > 0 %}
+                        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-blue-200 hover:bg-blue-900/40 hover:text-white">
+                            <span class="text-base">👥</span> Clientes
+                        </a>
+                        {% endif %}
+
+                        {% if permissions.vehiculos > 0 %}
+                        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-blue-200 hover:bg-blue-900/40 hover:text-white">
+                            <span class="text-base">🚘</span> Vehículos
+                        </a>
+                        {% endif %}
+                    </nav>
+                </div>
+
+                {% if permissions.simulaciones > 0 %}
+                <div>
+                    <p class="text-[10px] font-bold tracking-wider text-blue-400 uppercase px-3 mb-2">Operaciones</p>
+                    <nav class="space-y-1">
+                        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-blue-200 hover:bg-blue-900/40 hover:text-white">
+                            <span class="text-base">📄</span> Préstamos
+                        </a>
+                        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-blue-200 hover:bg-blue-900/40 hover:text-white">
+                            <span class="text-base">🧮</span> Simulador
+                        </a>
+                    </nav>
+                </div>
+                {% endif %}
+
+                {% if permissions.usuarios > 0 or permissions.configuraciones > 0 %}
+                <div>
+                    <p class="text-[10px] font-bold tracking-wider text-blue-400 uppercase px-3 mb-2">Sistema</p>
+                    <nav class="space-y-1">
+                        {% if permissions.usuarios > 0 %}
+                        <a href="{% url 'usuarios_list' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-blue-200 hover:bg-blue-900/40 hover:text-white">
+                            <span class="text-base">🛡️</span> Gestionar Personal
+                        </a>
+                        {% endif %}
+
+                        {% if permissions.configuraciones > 0 %}
+                        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-blue-200 hover:bg-blue-900/40 hover:text-white">
+                            <span class="text-base">⚙️</span> Configuración
+                        </a>
+                        {% endif %}
+                    </nav>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="text-[10px] text-blue-400/50 text-center pt-4 border-t border-blue-900">
+                SI642 — Finanzas e Ingeniería Económica
+            </div>
+        </aside>
+
+        <!-- ÁREA DE CONTENIDO DINÁMICO -->
+        <main class="flex-1 overflow-y-auto p-8 md:p-10">
+            {% block content %}
+            {% endblock %}
+        </main>
+
+    </div>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
