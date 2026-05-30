@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}AutoFinance - Configuración de Tasas e Intereses{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-950">Entidades Financieras y Tarifarios</h1>
+            <p class="text-gray-500 text-sm mt-1">Configura las tasas base (TEA), seguros de desgravamen y portes oficiales regulados por la SBS.</p>
+        </div>
+        
+        {% if max_permission >= 2 %}
+        <a href="{% url 'banco_create' %}" 
+           class="px-5 py-2.5 bg-[#0f2e5c] hover:bg-blue-900 text-white font-semibold rounded-xl text-sm transition-all shadow-md shadow-blue-900/10 flex items-center gap-2 cursor-pointer">
+            ➕ Agregar Entidad Financiera
+        </a>
+        {% endif %}
+    </div>
+
+    {% if messages %}
+        <div class="space-y-2">
+            {% for message in messages %}
+                <div class="p-4 rounded-xl text-sm border font-medium bg-emerald-50 border-emerald-200 text-emerald-800">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse m-0">
+                <thead>
+                    <tr class="bg-slate-50 border-b border-gray-100 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        <th class="py-4 px-6">Entidad Bancaria</th>
+                        <th class="py-4 px-6 text-center">TEA Base (%)</th>
+                        <th class="py-4 px-6 text-center">Desgravamen Mensual</th>
+                        <th class="py-4 px-6 text-center">Seguro Vehicular Anual</th>
+                        <th class="py-4 px-6 text-center">Comisión Portes</th>
+                        {% if max_permission >= 2 %}
+                        <th class="py-4 px-6 text-center">Acciones</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 text-sm text-gray-700">
+                    {% for banco in bancos %}
+                    <tr class="hover:bg-slate-50/50 transition-colors">
+                        <td class="py-4 px-6 font-bold text-gray-900 flex items-center gap-2">
+                            🏛️ {{ banco.nombre }}
+                        </td>
+                        <td class="py-4 px-6 text-center font-mono font-semibold text-blue-700 bg-blue-50/30">{{ banco.tea }} %</td>
+                        <td class="py-4 px-6 text-center font-mono text-xs">{{ banco.tasa_desgravamen }} %</td>
+                        <td class="py-4 px-6 text-center font-mono text-xs">{{ banco.tasa_seguro_vehicular }} %</td>
+                        <td class="py-4 px-6 text-center font-mono font-medium text-gray-900">S/. {{ banco.comision_portes }}</td>
+                        
+                        {% if max_permission >= 2 %}
+                        <td class="py-4 px-6 text-center">
+                            <a href="{% url 'banco_edit' banco.pk %}" class="px-3 py-1.5 bg-gray-50 hover:bg-blue-50 text-blue-600 rounded-lg font-bold text-xs transition-all border border-gray-100">
+                                Ajustar Tarifario
+                            </a>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="py-12 text-center text-gray-400 italic">No hay bancos registrados en el sistema. Registra uno para habilitar el simulador.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% block content_end %}{% endblock %}
+{% endblock %}

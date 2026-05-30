@@ -2,8 +2,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
-from .models import Cliente
-from .forms import ClienteForm
+from .models import Cliente, Banco
+from .forms import ClienteForm, BancoForm
 from usuarios.models import UserRole
 from django.db.models import Max
 
@@ -74,3 +74,57 @@ def cliente_edit(request, pk):
         form = ClienteForm(instance=cliente_obj)
 
     return render(request, 'finanzas/cliente_form.html', {'form': form, 'titulo': 'Editar Cliente'})
+
+# 1. LISTADO DE BANCOS Y TARIFARIOS
+@login_required
+def bancos_list(request):
+    max_permission = UserRole.objects.filter(usuario=request.user).aggregate(max=Max('rol__p_configuraciones'))['max'] or 0
+    if max_permission == 0:
+        messages.error(request, "No tienes acceso a las configuraciones globales del sistema.")
+        return redirect('dashboard')
+
+    bancos_queryset = Banco.objects.all().order_by('nombre')
+    return render(request, 'finanzas/bancos_list.html', {
+        'bancos': bancos_queryset,
+        'max_permission': max_permission
+    })
+
+# 2. AGREGAR BANCO
+@login_required
+def banco_create(request):
+    max_permission = UserRole.objects.filter(usuario=request.user).aggregate(max=Max('rol__p_configuraciones'))['max'] or 0
+    if max_permission < 2:
+        messages.error(request, "No cuentas con permisos de escritura para modificar configuraciones.")
+        return redirect('bancos_list')
+
+    if request.method == 'POST':
+        form = BancoForm(request.POST)
+        if form.is_valid():
+            banco = form.save()
+            messages.success(request, f"Entidad financiera {banco.nombre} incorporada con éxito al sistema.")
+            return redirect('bancos_list')
+    else:
+        form = BancoForm()
+
+    return render(request, 'finanzas/banco_form.html', {'form': form, 'titulo': 'Configurar Nueva Entidad Financiera'})
+
+# 3. EDITAR BANCO / ACTUALIZAR TASAS SBS
+@login_required
+def banco_edit(request, pk):
+    max_permission = UserRole.objects.filter(usuario=request.user).aggregate(max=Max('rol__p_configuraciones'))['max'] or 0
+    if max_permission < 2:
+        messages.error(request, "No cuentas con permisos para modificar el tarifario interbancario.")
+        return redirect('bancos_list')
+
+    banco_obj = get_object_or_404(Banco, pk=pk)
+
+    if request.method == 'POST':
+        form = BancoForm(request.POST, instance=banco_obj)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Tarifario de {banco_obj.nombre} actualizado correctamente.")
+            return redirect('bancos_list')
+    else:
+        form = BancoForm(instance=banco_obj)
+
+    return render(request, 'finanzas/banco_form.html', {'form': form, 'titulo': f'Actualizar Tarifario - {banco_obj.nombre}'})

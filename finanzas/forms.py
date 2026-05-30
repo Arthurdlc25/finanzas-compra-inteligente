@@ -1,5 +1,5 @@
 from django import forms
-from .models import Cliente
+from .models import Cliente, Banco
 
 class ClienteForm(forms.ModelForm):
     class Meta:
@@ -16,7 +16,6 @@ class ClienteForm(forms.ModelForm):
             'ingreso_mensual': forms.NumberInput(attrs={'class': 'w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white text-sm', 'placeholder': '0.00'}),
         }
 
-    # Validación lógica del lado del servidor
     def clean(self):
         cleaned_data = super().clean()
         tipo_cliente = cleaned_data.get('tipo_cliente')
@@ -24,7 +23,7 @@ class ClienteForm(forms.ModelForm):
         if tipo_cliente == 'NATURAL':
             if not cleaned_data.get('nombres') or not cleaned_data.get('apellidos'):
                 raise forms.ValidationError("Para una Persona Natural, los campos Nombres y Apellidos son obligatorios.")
-            cleaned_data['razon_social'] = None # Limpia basura si cambiaron de opinión
+            cleaned_data['razon_social'] = None
         elif tipo_cliente == 'JURIDICA':
             if not cleaned_data.get('razon_social'):
                 raise forms.ValidationError("Para una Persona Jurídica / Entidad, la Razón Social es obligatoria.")
@@ -32,3 +31,15 @@ class ClienteForm(forms.ModelForm):
             cleaned_data['apellidos'] = None
             
         return cleaned_data
+
+class BancoForm(forms.ModelForm):
+    class Meta:
+        model = Banco
+        fields = ['nombre', 'tea', 'tasa_desgravamen', 'tasa_seguro_vehicular', 'comision_portes']
+        widgets = {
+            'nombre': forms.TextInput(attrs={'class': 'w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white text-sm', 'placeholder': 'Ej. BCP, BBVA, Interbank'}),
+            'tea': forms.NumberInput(attrs={'class': 'w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white text-sm', 'placeholder': '0.00', 'step': '0.01'}),
+            'tasa_desgravamen': forms.NumberInput(attrs={'class': 'w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white text-sm', 'placeholder': '0.0000', 'step': '0.0001'}),
+            'tasa_seguro_vehicular': forms.NumberInput(attrs={'class': 'w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white text-sm', 'placeholder': '0.00', 'step': '0.01'}),
+            'comision_portes': forms.NumberInput(attrs={'class': 'w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white text-sm', 'placeholder': '0.00', 'step': '0.01'}),
+        }

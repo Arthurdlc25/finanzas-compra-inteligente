@@ -61,3 +61,22 @@ class Vehiculo(models.Model):
 
     def __str__(self):
         return f"{self.marca} {self.modelo} ({self.anio}) - $ {self.precio_base:,}"
+
+class Banco(models.Model):
+    nombre = models.CharField(max_length=100, unique=True, verbose_name="Nombre de la Entidad Financiera")
+    
+    tea = models.DecimalField(max_digits=5, decimal_places=2, verbose_name="Tasa Efectiva Anual (TEA %)")
+    tasa_desgravamen = models.DecimalField(max_digits=5, decimal_places=4, verbose_name="Seguro de Desgravamen Mensual (%)")
+    tasa_seguro_vehicular = models.DecimalField(max_digits=5, decimal_places=2, verbose_name="Seguro Vehicular Anual (%)")
+    comision_portes = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Comisión por Portes / Envío de Estado de Cuenta")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'bancos'
+        verbose_name = 'Banco'
+        verbose_name_plural = 'Bancos'
+
+    def __str__(self):
+        return f"{self.nombre} (TEA: {self.tea}%)"
