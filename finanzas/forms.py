@@ -1,5 +1,5 @@
 from django import forms
-from .models import Cliente, Banco, Vehiculo
+from .models import Cliente, Banco, Vehiculo, Simulacion
 
 class ClienteForm(forms.ModelForm):
     class Meta:
@@ -55,3 +55,37 @@ class VehiculoForm(forms.ModelForm):
             'precio_base': forms.NumberInput(attrs={'class': 'w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white text-sm', 'placeholder': 'Valor comercial en USD', 'step': '0.01'}),
             'disponible': forms.CheckboxInput(attrs={'class': 'w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer'}),
         }
+
+class SimulacionForm(forms.ModelForm):
+    class Meta:
+        model = Simulacion
+        fields = [
+            'cliente', 'vehiculo', 'banco', 'moneda', 'tipo_cambio', 
+            'cuota_inicial_porcentaje', 'cuota_balon_porcentaje', 
+            'plazo_meses', 'meses_gracia', 'tipo_gracia'
+        ]
+        widgets = {
+            'cliente': forms.Select(attrs={'class': 'w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white text-sm'}),
+            'vehiculo': forms.Select(attrs={'class': 'w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white text-sm'}),
+            'banco': forms.Select(attrs={'class': 'w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white text-sm'}),
+            'moneda': forms.Select(attrs={'class': 'w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white text-sm'}),
+            'tipo_cambio': forms.NumberInput(attrs={'class': 'w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white text-sm', 'step': '0.01'}),
+            'cuota_inicial_porcentaje': forms.NumberInput(attrs={'class': 'w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white text-sm', 'placeholder': 'Ej. 20.00', 'step': '0.01'}),
+            'cuota_balon_porcentaje': forms.NumberInput(attrs={'class': 'w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white text-sm', 'placeholder': 'Ej. 40.00', 'step': '0.01'}),
+            'plazo_meses': forms.Select(attrs={'class': 'w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white text-sm'}),
+            'meses_gracia': forms.NumberInput(attrs={'class': 'w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white text-sm', 'min': '0', 'max': '3', 'placeholder': '0 a 3'}),
+            'tipo_gracia': forms.Select(attrs={'class': 'w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white text-sm'}),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        meses_gracia = cleaned_data.get('meses_gracia', 0)
+        tipo_gracia = cleaned_data.get('tipo_gracia')
+
+        if tipo_gracia != 'SIN_GRACIA' and meses_gracia == 0:
+            self.add_error('meses_gracia', "Si seleccionas un tipo de gracia, la cantidad de meses debe ser mayor a 0.")
+        
+        if tipo_gracia == 'SIN_GRACIA' and meses_gracia > 0:
+            cleaned_data['meses_gracia'] = 0
+            
+        return cleaned_data

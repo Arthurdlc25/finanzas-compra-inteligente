@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}AutoFinance - Portafolio de Préstamos{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <div>
+        <h1 class="text-3xl font-bold text-gray-950">Portafolio de Préstamos Emitidos</h1>
+        <p class="text-gray-500 text-sm mt-1">Historial y registro auditor de créditos vehiculares bajo la modalidad de Compra Inteligente.</p>
+    </div>
+
+    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+        <form method="GET" action="{% url 'prestamos_list' %}" class="flex gap-3 m-0 p-0">
+            <div class="relative flex-1 max-w-md">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400">🔍</span>
+                <input type="text" name="buscar" value="{{ buscar }}"
+                       class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white text-sm text-gray-900 placeholder-gray-400"
+                       placeholder="Buscar por DNI, RUC, Nombre o Banco...">
+            </div>
+            <button type="submit" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl text-sm transition-all cursor-pointer">
+                Filtrar
+            </button>
+            {% if buscar %}
+                <a href="{% url 'prestamos_list' %}" class="px-4 py-2.5 text-gray-400 hover:text-gray-600 text-sm flex items-center">Limpiar</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse m-0 text-sm">
+                <thead>
+                    <tr class="bg-slate-50 border-b border-gray-100 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        <th class="py-4 px-6 text-center">N° Crédito</th>
+                        <th class="py-4 px-6">Fecha Registro</th>
+                        <th class="py-4 px-6">Cliente / Deudor</th>
+                        <th class="py-4 px-6">Activo / Vehículo</th>
+                        <th class="py-4 px-6">Estructura Bancaria</th>
+                        <th class="py-4 px-6 text-center">TCEA Real</th>
+                        <th class="py-4 px-6 text-right">VAN Generado</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 text-gray-700">
+                    {% for prestamo in prestamos %}
+                    <tr class="hover:bg-slate-50/50 transition-colors">
+                        <td class="py-4 px-6 text-center font-bold font-mono text-xs">
+                            <a href="{% url 'prestamo_detail' prestamo.pk %}" class="text-blue-600 hover:text-blue-900 hover:underline">
+                                #{{ prestamo.id|stringformat:"04d" }}
+                            </a>
+                        </td>
+                        <td class="py-4 px-6 text-xs text-gray-400">
+                            {{ prestamo.created_at|date:"d/m/Y H:i" }}
+                        </td>
+                        <td class="py-4 px-6">
+                            <div class="flex flex-col">
+                                <span class="font-semibold text-gray-900">
+                                    {% if prestamo.cliente.tipo_cliente == 'NATURAL' %}
+                                        {{ prestamo.cliente.nombres }} {{ prestamo.cliente.apellidos }}
+                                    </span>
+                                    <span class="text-[11px] text-gray-400 font-mono">DNI: {{ prestamo.cliente.documento_identidad }}</span>
+                                    {% else %}
+                                        {{ prestamo.cliente.razon_social }}
+                                    </span>
+                                    <span class="text-[11px] text-purple-600 font-mono font-bold">RUC: {{ prestamo.cliente.documento_identidad }} (Empresa)</span>
+                                    {% endif %}
+                            </div>
+                        </td>
+                        <td class="py-4 px-6">
+                            <div class="flex flex-col">
+                                <span class="font-medium text-gray-900">🚘 {{ prestamo.vehiculo.marca }} {{ prestamo.vehiculo.modelo }}</span>
+                                <span class="text-[11px] text-gray-400 font-mono">Año: {{ prestamo.vehiculo.anio }} | base: $ {{ prestamo.vehiculo.precio_base|floatformat:2 }}</span>
+                            </div>
+                        </td>
+                        <td class="py-4 px-6">
+                            <div class="flex flex-col">
+                                <span class="font-semibold text-gray-800">🏛️ {{ prestamo.banco.nombre }}</span>
+                                <span class="text-[11px] text-gray-400">Financiado en: <strong class="text-gray-900 font-mono">{{ prestamo.moneda }}</strong></span>
+                            </div>
+                        </td>
+                        <td class="py-4 px-6 text-center font-mono font-bold text-blue-700 bg-blue-50/20">
+                            {{ prestamo.tcea_calculada }} %
+                        </td>
+                        <td class="py-4 px-6 text-right font-mono font-bold {% if prestamo.van_calculado > 0 %}text-emerald-700{% else %}text-red-600{% endif %}">
+                            {% if prestamo.moneda == 'PEN' %}S/.{% else %}${% endif %} {{ prestamo.van_calculado|floatformat:2 }}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="py-12 text-center text-gray-400 italic">
+                            No se registran deudas o préstamos históricos asentados bajo los filtros indicados.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

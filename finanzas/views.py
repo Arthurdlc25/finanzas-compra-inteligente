@@ -2,8 +2,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
-from .models import Cliente, Banco, Vehiculo
-from .forms import ClienteForm, BancoForm, VehiculoForm
+from .models import Cliente, Banco, Vehiculo, Simulacion
+from .forms import ClienteForm, BancoForm, VehiculoForm, SimulacionForm
+from .utils import calcular_cronograma_compra_inteligente
 from usuarios.models import UserRole
 from django.db.models import Max
 
@@ -191,3 +192,85 @@ def vehiculo_edit(request, pk):
         form = VehiculoForm(instance=vehiculo_obj)
 
     return render(request, 'finanzas/vehiculo_form.html', {'form': form, 'titulo': f'Editar {vehiculo_obj.marca} {vehiculo_obj.modelo}'})
+
+@login_required
+def prestamos_list(request):
+    max_permission = UserRole.objects.filter(usuario=request.user).aggregate(max=Max('rol__p_simulaciones'))['max'] or 0
+    if max_permission == 0:
+        messages.error(request, "No cuentas con acceso al módulo de Préstamos.")
+        return redirect('dashboard')
+
+    prestamos_queryset = Simulacion.objects.all().order_by('-created_at').select_related('cliente', 'vehiculo', 'banco')
+
+    buscar = request.GET.get('buscar', '').strip()
+    if buscar:
+        prestamos_queryset = prestamos_queryset.filter(
+            Q(cliente__documento_identidad__icontains=buscar) |
+            Q(cliente__nombres__icontains=buscar) |
+            Q(cliente__apellidos__icontains=buscar) |
+            Q(cliente__razon_social__icontains=buscar) |
+            Q(banco__nombre__icontains=buscar)
+        )
+
+    return render(request, 'finanzas/prestamos_list.html', {
+        'prestamos': prestamos_queryset,
+        'buscar': buscar,
+        'max_permission': max_permission
+    })
+
+@login_required
+def simulador_view(request):
+    max_permission = UserRole.objects.filter(usuario=request.user).aggregate(max=Max('rol__p_simulaciones'))['max'] or 0
+    if max_permission == 0:
+        messages.error(request, "No cuentas con acceso al módulo de Simulación.")
+        return redirect('dashboard')
+
+    resultado = None
+    form = SimulacionForm(request.POST or None)
+
+    if request.method == 'POST' and form.is_valid():
+        # Instanciamos el objeto en memoria sin guardarlo permanentemente aún
+        simulacion_instancia = form.save(commit=False)
+        simulacion_instancia.created_by = request.user
+        
+        # Ejecutamos el motor de cálculo
+        resultado = calcular_cronograma_compra_inteligente(simulacion_instancia)
+        
+        # Evaluamos el Scoring de capacidad de pago (Regla de negocio: Máximo 30%)
+        cuota_mensual_regular = resultado['cronograma'][simulacion_instancia.meses_gracia + 1]['cuota_total']
+        ingreso_cliente = simulacion_instancia.cliente.ingreso_mensual
+        ratio_endeudamiento = (cuota_mensual_regular / ingreso_cliente) * 100
+        
+        resultado['ratio_endeudamiento'] = ratio_endeudamiento
+        resultado['aprobado'] = ratio_endeudamiento <= 30
+        
+        # Si el usuario decide confirmar y guardar el registro histórico
+        if 'guardar_prestamo' in request.POST and resultado['aprobado']:
+            simulacion_instancia.tcea_calculada = resultado['tcea']
+            simulacion_instancia.van_calculado = resultado['van']
+            simulacion_instancia.tir_calculada = resultado['tir']
+            simulacion_instancia.save()
+            messages.success(request, f"Simulación #{simulacion_instancia.id} guardada exitosamente en el historial de préstamos.")
+            return redirect('dashboard')
+
+    return render(request, 'finanzas/simulador.html', {
+        'form': form,
+        'resultado': resultado,
+        'max_permission': max_permission
+    })
+
+@login_required
+def prestamo_detail(request, pk):
+    max_permission = UserRole.objects.filter(usuario=request.user).aggregate(max=Max('rol__p_simulaciones'))['max'] or 0
+    if max_permission == 0:
+        messages.error(request, "No tienes acceso a los expedientes de créditos.")
+        return redirect('dashboard')
+
+    prestamo = get_object_or_404(Simulacion, pk=pk)
+    
+    resultado = calcular_cronograma_compra_inteligente(prestamo)
+    
+    return render(request, 'finanzas/prestamo_detail.html', {
+        'prestamo': prestamo,
+        'resultado': resultado
+    })
